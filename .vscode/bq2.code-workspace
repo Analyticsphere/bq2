@@ -1,0 +1,71 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"sqltools.connections": [
+			{
+				"name": "BQ1-DEV",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"group": "Connect-BQ1",
+				"projectId": "nih-nci-dceg-connect-dev"
+			},
+			{
+				"name": "BQ1-STG",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"group": "Connect-BQ1",
+				"projectId": "nih-nci-dceg-connect-stg-5519"
+			},
+			{
+				"name": "BQ1-PROD",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"group": "Connect-BQ1",
+				"projectId": "nih-nci-dceg-connect-prod-6d04"
+			},
+			{
+				"name": "BQ2-DEV",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"group": "Connect-BQ2",
+				"projectId": "nih-nci-dceg-connect-bq2-dev"
+			},
+			{
+				"name": "BQ2-STAGE",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"projectId": "nih-nci-dceg-connect-bq2-stage",
+				"group": "Connect-BQ2"
+			},
+			{
+				"name": "BQ2-PROD",
+				"authenticator": "CLI",
+				"location": "us",
+				"previewLimit": 50,
+				"driver": "BigQuery",
+				"group": "Connect-BQ2",
+				"projectId": "nih-nci-dceg-connect-bq2-prod"
+			}
+		],
+		"sqltools.useNodeRuntime": true,
+		"sqltools.format": {
+			"reservedWordCase": "upper",
+			"language": "sql",
+			"linesBetweenQueries": 3
+		}
+	}
+}
