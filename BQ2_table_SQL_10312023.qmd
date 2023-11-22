@@ -124,7 +124,7 @@ WHERE p.d_821247024 = '197316935'\"",sep="")
 for (i in c(1,4,5,6,11)){
   select <- paste(schema[[i]]$column_name,collapse=", \nb.")  
    table <- unique(schema[[i]]$table_name)
-   sql <- paste("SELECT b.",select,") FROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",table,"` b
+   sql <- paste("SELECT b.",select,"\np.Connect_ID) FROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",table,"` b
 INNER JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.participants_JP` p ON cast(b.Connect_ID as int64)= cast(p.Connect_ID as int64)
 WHERE p.d_821247024 = '197316935'\"",sep="")
    write.table(sql,paste("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",table,"_BQ2query_11232023.txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F)
@@ -192,6 +192,8 @@ write.table(paste(m2_common.vars,collapse=",\n"),"~/Documents/Connect_projects/B
 write.table(paste(m2_v1.only,collapse=", \nv1."),"~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/M2_V1only_variables_11202023.txt", sep="\t",row.names = F,quote = F,col.names = F)
 write.table(paste(m2_v2.only,collapse=", \nv2."),"~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/M2_V2only_variables_11202023.txt", sep="\t",row.names = F,quote = F,col.names=F)
 
+query_m2 <- 
+
 pii <- paste(dt_pii_dd$column_name[which(dt_pii_dd$table_name =="module4_v1_JP")],collapse = ",")
 schem_m4 <-  schema[[12]]
 m4_vars.nopii <- schem_m4$column_name[which(schem_m4$column_name %nin% pii)]
@@ -200,10 +202,10 @@ query <- paste("SELECT m4.",select_m4,") FROM  `nih-nci-dceg-connect-prod-6d04.F
 INNER JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.participants_JP` p ON cast(b.Connect_ID as int64)= cast(p.Connect_ID as int64)
 WHERE p.d_821247024 = '197316935'\"",sep="")
 
-write.table(paste("SELECT m4.",select_m4,") FROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.module4_v1_JP` b
+write.table(paste("SELECT m4.",select_m4,"\np.Connect_ID) FROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.module4_v1_JP` b
 INNER JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.participants_JP` p ON cast(b.Connect_ID as int64)= cast(p.Connect_ID as int64)
 WHERE p.d_821247024 = '197316935'\"",sep=""),"~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/M4_BQ2query_11232023.txt", sep="\t",row.names = F,quote = F,col.names = F)
-query_dt[6,] <- c("module4_v1_JP",query)
+
 
 
 ```
