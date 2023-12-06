@@ -1,0 +1,12 @@
+SELECT b.__has_error__, 
+b.Connect_ID, 
+b.D_593467240, 
+b.d_901199566, 
+b.D_951357171, 
+b.sha, 
+b.treeJSON, 
+b.uid, 
+b.date
+p.Connect_ID) FROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.menstrualSurvey_v1_JP` b
+INNER JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.participants_JP` p ON cast(b.Connect_ID as int64)= cast(p.Connect_ID as int64)
+WHERE p.d_821247024 = '197316935'"
