@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+bq2.Rproj
+.DS_Store
+untracked/*
+.vscode/*
