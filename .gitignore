@@ -3,4 +3,6 @@
 .RData
 .Ruserdata
 bq2.Rproj
-get_structs_and_arrays.sql
+.DS_Store
+untracked/*
+.vscode/*
