@@ -13,9 +13,18 @@ editor: visual
 ### Set script parameters
 
 ```{r}
-project    <- "nih-nci-dceg-connect-prod-6d04"
-outputpath <- "sql/"
+tier       <- "prod"
+outputpath <- "sql"
 export_lists_of_variables <- FALSE
+
+
+# Use switch to select the project based on the tier
+project <- switch(tier,
+  prod = "nih-nci-dceg-connect-prod-6d04",
+  stg  = "nih-nci-dceg-connect-stg-5519",
+  dev  = "nih-nci-dceg-connect-dev",
+  "unknown-environment"  # Default value if none of the cases match
+)
 ```
 
 ### Load dependencies
@@ -210,7 +219,7 @@ for (ith_table in q_nopii) {
         AND p.d_747006172 != '353358909' -- has not withdrawn consent")
    
    bq2_tbl_name <- gsub("_v1_JP", "", table) # remove the _v1_JP pattern from file name
-   write(sql, file = glue("{outputpath}bq2_{bq2_tbl_name}.sql"))
+   write(sql, file = glue("{outputpath}/{tier}/bq2_{bq2_tbl_name}.sql"))
 
 }
 ```
@@ -261,15 +270,15 @@ common_pii   <- unique(dt_pii_dd$column_name[which(dt_pii_dd$column_name
 if (export_lists_of_variables) {
   
   write.table(paste(var.matched, collapse=",\n"),
-              glue("{outputpath}/m1_common_variables.txt"), 
+              glue("{outputpath}/{tier}/m1_common_variables.txt"), 
               sep = "\t", row.names = F, quote = F)
   
   write.table(paste(V1_only_vars, collapse = ", \nv1."),
-              glue("{outputpath}/m1_v1_only_variables.txt"), 
+              glue("{outputpath}/{tier}/m1_v1_only_variables.txt"), 
               sep = "\t", row.names = F, quote = F, col.names = F)
   
   write.table(paste(V2_only_vars, collapse = ", \nv2."),
-              glue("{outputpath}/m1_v2_only_variables.txt"), 
+              glue("{outputpath}/{tier}/m1_v2_only_variables.txt"), 
               sep = "\t", row.names = F, quote = F, col.names = F)
 }
 
@@ -354,15 +363,15 @@ query_a <- glue(
         AND p.d_747006172 != '353358909' -- has not widrawn consent")
 
 # Save the query to file
-write(query_a, file = glue("{outputpath}bq2_module1.sql"))
+write(query_a, file = glue("{outputpath}/{tier}/bq2_module1.sql"))
 ```
 
 ### Merge Module 2
 
 ```{r}
 # Grab the schemas for Module 2 Version 1 and Module 2 Version 2
-schem_m2_v1 <- schema[["module2_v1"]]
-schem_m2_v2 <- schema[["module2_v2"]]
+schem_m2_v1 <- schema[["module2_v1_JP"]]
+schem_m2_v2 <- schema[["module2_v2_JP"]]
 
 # Get the vars that are common to both versions
 m2_common.vars <- schem_m2_v1$column_name[which(schem_m2_v1$column_name 
@@ -437,7 +446,7 @@ query_string <- glue(
     
     WITH m2_dup AS
     (SELECT 
-      {select_dup} 
+      {select_dup}, 
       2 as version 
     FROM 
       `{project}.FlatConnect.module2_v2_JP`
@@ -472,7 +481,7 @@ query_string <- glue(
       AND p.d_747006172 != '353358909' -- has not withdrawn consent ")
 
 # Save the query to file
-write(query_string, file = glue("{outputpath}bq2_module2.sql"))
+write(query_string, file = glue("{outputpath}/{tier}/bq2_module2.sql"))
 ```
 
 ### Merge Module 4
@@ -511,5 +520,5 @@ query <- glue(
                 AND p.d_747006172 != '353358909'")
 
 # Save the query to file
-write(query, file = glue("{outputpath}bq2_module4.sql"))
+write(query, file = glue("{outputpath}/{tier}/bq2_module4.sql"))
 ```

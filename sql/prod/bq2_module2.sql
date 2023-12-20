@@ -704,7 +704,7 @@ WITH m2_dup AS
 	D_996243083, 
 	sha, 
 	uid, 
-	date 
+	date, 
   2 as version 
 FROM 
   `nih-nci-dceg-connect-prod-6d04.FlatConnect.module2_v2_JP`
