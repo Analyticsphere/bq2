@@ -6,3 +6,6 @@ bq2.Rproj
 .DS_Store
 untracked/*
 .vscode/*
+generate_bq2_queries_files
+generate_bq2_queries.rmarkdown
+generate_bq2_queries.html

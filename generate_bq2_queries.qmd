@@ -51,6 +51,7 @@ get_last_cid <- function(compound_cid_name) {
 ```
 
 ### Save a description of the query generator process to add to sql code
+
 ```{r}
 note <- 
   "Note:
@@ -62,6 +63,7 @@ note <-
 ```
 
 ### Generate list of PII/non-PII variables from participants table
+
 ```{r}
 # Get updated data dictionary
 urlfile <- 
@@ -281,7 +283,7 @@ selectm1_dup     <- paste(var.matched[which(var.matched %nin% common_pii)],
 select_m1v1_only <- paste(V1_only_vars[which(V1_only_vars %nin% v1_only_pii)], 
                           collapse = ", \n\tv1.")
 select_m1v2_only <- paste(V2_only_vars[which(V2_only_vars %nin% v2_only_pii)],
-                          collapse = ", \n\tv1.")
+                          collapse = ", \n\tv2.")
 
 # Get the individuals who completed version 1 and version 2
 sql <- glue("SELECT DISTINCT Connect_ID
@@ -325,7 +327,7 @@ query_a <- glue(
       FROM `{project}.FlatConnect.module1_v2_JP`
       UNION ALL
       SELECT
-        {selectm1_dup}
+        {selectm1_dup},
         1 as version 
       FROM `{project}.FlatConnect.module1_v1_JP`
       -- Remove participants that completed both v1 & v2 from the table for v1.
@@ -340,7 +342,7 @@ query_a <- glue(
         -- Select variables that are unique to version 2
         {select_m1v2_only},
         p.Connect_ID 
-      FROM m2_dup AS dup
+      FROM m1_dup AS dup
       LEFT JOIN `{project}.FlatConnect.module1_v1_JP` AS v1
         ON dup.Connect_ID = v1.Connect_ID
       LEFT JOIN	`{project}.FlatConnect.module1_v2_JP` AS v2
@@ -395,7 +397,7 @@ if (export_lists_of_variables) {
 # unique to v1 and unique to v2
 select_dup       <- paste(m2_common.vars, collapse = ", \n\t")
 select_m2v1_only <- paste(m2_v1.only, collapse = ", \n\tv1.")
-select_m2v2_only <- paste(m2_v2.only, collapse = ", \n\tv1.")
+select_m2v2_only <- paste(m2_v2.only, collapse = ", \n\tv2.")
 
 # List individuals who completed both version of Module 2, to be pasted into sql
 
