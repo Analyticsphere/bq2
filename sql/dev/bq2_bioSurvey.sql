@@ -393,8 +393,7 @@ SELECT
 	b.D_984121390_1_1, 
 	b.D_984121390_2_2, 
 	b.uid, 
-	b.date 
-  p.Connect_ID
+	b.date
 FROM 
   `nih-nci-dceg-connect-dev.FlatConnect.bioSurvey_v1_JP` b
 INNER JOIN `nih-nci-dceg-connect-dev.FlatConnect.participants_JP` p

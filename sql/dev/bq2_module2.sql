@@ -1488,8 +1488,7 @@ SELECT
 	v2.D_968816827_19_19, 
 	v2.D_968816827_20_20, 
 	v2.D_968816827_21_21, 
-	v2.D_968816827_22_22,
-  p.Connect_ID 
+	v2.D_968816827_22_22
 FROM
   m2_dup AS dup
 LEFT JOIN `nih-nci-dceg-connect-dev.FlatConnect.module2_v1_JP` AS v1

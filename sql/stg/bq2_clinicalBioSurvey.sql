@@ -333,8 +333,7 @@ SELECT
 	b.sha, 
 	b.treeJSON, 
 	b.uid, 
-	b.date 
-  p.Connect_ID
+	b.date
 FROM 
   `nih-nci-dceg-connect-stg-5519.FlatConnect.clinicalBioSurvey_v1_JP` b
 INNER JOIN `nih-nci-dceg-connect-stg-5519.FlatConnect.participants_JP` p

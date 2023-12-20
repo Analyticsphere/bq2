@@ -208,8 +208,7 @@ for (ith_table in q_nopii) {
       */
       
       SELECT 
-        b.{select} 
-        p.Connect_ID
+        b.{select}
       FROM 
         `{project}.FlatConnect.{table}` b
       INNER JOIN `{project}.FlatConnect.participants_JP` p
@@ -349,8 +348,7 @@ query_a <- glue(
         -- Select variables that are unique to version 1
         {select_m1v1_only},
         -- Select variables that are unique to version 2
-        {select_m1v2_only},
-        p.Connect_ID 
+        {select_m1v2_only}
       FROM m1_dup AS dup
       LEFT JOIN `{project}.FlatConnect.module1_v1_JP` AS v1
         ON dup.Connect_ID = v1.Connect_ID
@@ -466,8 +464,7 @@ query_string <- glue(
       -- Select variables that are unique to v1
       {select_m2v1_only},
       -- Select variables that are unique to v2
-      {select_m2v2_only},
-      p.Connect_ID 
+      {select_m2v2_only}
     FROM
       m2_dup AS dup
     LEFT JOIN `{project}.FlatConnect.module2_v1_JP` AS v1

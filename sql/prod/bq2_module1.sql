@@ -3669,8 +3669,7 @@ SELECT
 	v2.D_990114799_6_6_D_206625031_6_6, 
 	v2.D_990114799_6_6_D_261863326_6_6, 
 	v2.D_990114799_6_6_D_261863326_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6_6, 
-	v2.D_990114799_9_9_D_206625031_9_9,
-  p.Connect_ID 
+	v2.D_990114799_9_9_D_206625031_9_9
 FROM m1_dup AS dup
 LEFT JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.module1_v1_JP` AS v1
   ON dup.Connect_ID = v1.Connect_ID

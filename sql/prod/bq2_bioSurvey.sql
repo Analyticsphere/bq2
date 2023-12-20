@@ -420,8 +420,7 @@ SELECT
 	b.D_984121390_2_2, 
 	b.sha, 
 	b.uid, 
-	b.date 
-  p.Connect_ID
+	b.date
 FROM 
   `nih-nci-dceg-connect-prod-6d04.FlatConnect.bioSurvey_v1_JP` b
 INNER JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.participants_JP` p

@@ -1539,8 +1539,7 @@ SELECT
 	v2.D_981441822_D_760686611_sm, 
 	v2.D_981441822_D_922388461_sm, 
 	v2.D_981441822_D_955609858_sm, 
-	v2.D_981441822_D_988508028_sm,
-  p.Connect_ID 
+	v2.D_981441822_D_988508028_sm
 FROM
   m2_dup AS dup
 LEFT JOIN `nih-nci-dceg-connect-prod-6d04.FlatConnect.module2_v1_JP` AS v1
