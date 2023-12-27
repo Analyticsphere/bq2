@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # bq2
 
 SQL query development for Connect for Cancer Preventions' BQ2 database.
