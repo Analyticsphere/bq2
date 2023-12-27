@@ -1,15 +1,12 @@
 # Initialize user-defined GoogleSQL functions to be used in BQ2 queries
 
-/*
-unbracket
+/* unbracket
+Description:
     Handle "false array" survey variables
 GH Issue: 
     https://github.com/Analyticsphere/bq2/issues/6
 Usage:
-    SELECT 
-      BQ2.unbracket(CID) AS CID
-    FROM 
-      BQ2.table
+    SELECT BQ2.unbracket(CID) AS CID FROM BQ2.table
 */
 CREATE OR REPLACE FUNCTION BQ2.unbracket(col_name STRING) AS (
   CASE
@@ -18,16 +15,13 @@ CREATE OR REPLACE FUNCTION BQ2.unbracket(col_name STRING) AS (
   END
 );
 
-/*
-yesorno
+/* yesorno
+Descrition:
     Convert 0/1 to 353358909/104430631 for select-all-that-apply vars
 GH Issue: 
     https://github.com/Analyticsphere/bq2/issues/5
 Usage:
-    SELECT 
-      BQ2.yesorno(CID) AS CID
-    FROM 
-      BQ2.table
+    SELECT BQ2.yesorno(CID) AS CID FROM BQ2.table
 */
 CREATE OR REPLACE FUNCTION BQ2.yesorno(col_name STRING) AS (
   CASE
