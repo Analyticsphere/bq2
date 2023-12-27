@@ -6,7 +6,7 @@ GH Issue:
 Usage:
     SELECT yesorno(CID) AS CID FROM BQ2.table
 */
-CREATE TEMP FUNCTION FUNCTION BQ2.yesorno(col_name STRING) AS (
+CREATE TEMP FUNCTION FUNCTION yesorno(col_name STRING) AS (
   CASE
     WHEN col_name = "1" THEN "353358909"
     WHEN col_name = "0" THEN "104430631"

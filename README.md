@@ -14,8 +14,8 @@ SQL query development for Connect for Cancer Preventions' BQ2 database.
 
 ## Contributions
 
-Jing wrote the originial script and Jake has been editing for clarity
-and reproducibility.
+Jing wrote the originial `generate_bq2_queries.qmd` script and Jake has been 
+editing for clarity and reproducibility and contributing for new use cases.
 
 ## Intention for this repository
 

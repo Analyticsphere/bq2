@@ -6,7 +6,7 @@ GH Issue:
 Usage:
     SELECT unbracket(CID) AS CID FROM BQ2.table
 */
-CREATE TEMP FUNCTION BQ2.unbracket(col_name STRING) AS (
+CREATE TEMP FUNCTION unbracket(col_name STRING) AS (
   CASE
     WHEN col_name = "[]" THEN NULL
     ELSE REGEXP_REPLACE(col_name, r'\[(\d{9})\]', r'\1')
