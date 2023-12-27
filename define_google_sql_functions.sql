@@ -1,6 +1,5 @@
 # Initialize user-defined GoogleSQL functions to be used in BQ2 queries
 
-
 /* unbracket: 
 Description: 
     Handle "false array" survey variables
@@ -15,7 +14,6 @@ CREATE OR REPLACE FUNCTION BQ2.unbracket(col_name STRING) AS (
     ELSE REGEXP_REPLACE(col_name, r'\[(\d{9})\]', r'\1')
   END
 );
-
 
 /* yesorno
 Description:
