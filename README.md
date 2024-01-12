@@ -44,8 +44,11 @@ These generic transformations will be applied to each table:
 #### (A) Planned
 
 #### (B) In-Progress
-- Item (Issue #7)
-- Item (Issue #1)
+- Partition YEAR and AGE into seperate columns [CID: d_317093647]  https://github.com/Analyticsphere/bq2/issues/8
+- Correct/consolidate CIDs for <SURGERY_AGE> AND <SURGERY_YEAR>    https://github.com/Analyticsphere/bq2/issues/4
+- Convert 0/1 to yes/no (CIDs: 104430631/353358909) for Select-all-that-apply-variables     https://github.com/Analyticsphere/bq2/issues/5
+- Remove unnecessary brackets from "false array" viarables - [CID1], [CID2], [], NULL --> CID1, CID2, NULL    https://github.com/Analyticsphere/bq2/issues/6
+- Consolidate loop variables w/ similar "CID2\_N\_CID3\_N" naming patterns     https://github.com/Analyticsphere/bq2/issues/7
 
 #### (C) Finalized
 
