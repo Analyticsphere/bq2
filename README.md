@@ -16,7 +16,7 @@ All members of the BQ2 team can clone the "main" branch of this repo. Pull reque
 
 # Documentation of Transformations from BQ1 to BQ2
 
-![Schematic of transformations from BQ1 to BQ2](images/bq2-setup-02.png)[Lucid Chart](https://lucid.app/lucidchart/7d4864f5-3e19-4210-8da8-99a6c98ff6b7/edit?viewport_loc=-404%2C-59%2C3328%2C1587%2C0_0&invitationId=inv_45fd4ac7-8213-43b5-951d-240389f6b138)
+![Schematic of transformations from BQ1 to BQ2](images/bq2-setup.png)[Lucid Chart](https://lucid.app/lucidchart/7d4864f5-3e19-4210-8da8-99a6c98ff6b7/edit?viewport_loc=-404%2C-59%2C3328%2C1587%2C0_0&invitationId=inv_45fd4ac7-8213-43b5-951d-240389f6b138)
 
 Below we will document transformations that are (A) planned, (B! in-progress, and (C) finalized, for each dataset. This will serve to organize the bq2 team and help us communicate with leadership about problems we identify and solutions that we implement.
 
