@@ -1,0 +1,169 @@
+---
+title: "coalesce_rename_function"
+author: "Jing Wu"
+format: html
+editor: visual
+---
+
+## coalesce_rename_function
+
+to create the general functions to pull all the pairs of variables to the same response in the module data by their similar name patterns as Jake requested on Jan. 12, 2024: the work flow is to after removal of all PII-relevant variables
+
+a\. check the schema to group the variable names in general:
+
+1.  "long.endings": with long endings (yes/no);
+
+2.  "varname_type": with numbers of CIDs (0\~3) and with long tails (\> 3 or not= Long,Short, Notails): Long\_#CIDs, Short\_#CIDs, Notails\_#CIDs find the duplicated patterns of the variable names,
+
+b\. group the variable names with the duplicated patterns (identified by "var.pattern") as pairs with the long tails, short tails, and notails but some issues (CID2_CID3 (txt responses), CID2_CID2_CID3(as 0)),
+
+c\. develop the sql queries in text of each patterns to coalesce in the process the data( duplicated ones:Long tail, and Short tails);
+
+d\. develop the sql query for renaming the variables only with long tails;
+
+e\. to save the output of sql text in the directed folder
+
+Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+#| echo: false
+#| include: false
+#| eval: true
+# [hide] 
+library(data.table) ###to write or read and data management 
+library(tidyverse) ###for data management https://tidyselect.r-lib.org/reference/faq-external-vector.html
+library(dplyr) ###data management some functions are not available in the dplyr masked in the tidyverse
+library(reshape)  ###to work on transition from long to wide or wide to long data
+library(listr) ###to work on a list of vector, files or..
+#library(lubridate) ###date time it is already masked in 'tidyverse'
+library(gridExtra)
+library(stringr) ###to work on patterns, charaters
+library(plyr)
+library(tidyr)
+library(tinytex) #for pdf
+library(rmarkdown) ###for the output tables into other files: pdf, rtf, etc.
+library(janitor) #to get the summary sum
+library(finalfit) #https://cran.r-project.org/web/packages/finalfit/vignettes/export.html t
+library(expss) ###to add labels
+library(epiDisplay) ##recommended applied here crosstable, tab1
+#library(summarytools) ##recommended not applied in this R code
+library(arsenal)
+library(rio)
+library(readxl)
+library(purrr)
+
+#dictionary <- rio::import("https://github.com/episphere/conceptGithubActions/blob/master/aggregate.json",format = "json")
+dictionary <- rio::import("https://episphere.github.io/conceptGithubActions/aggregateCopy.json",format = "json")
+dd <- dplyr::bind_rows(dictionary,.id="CID")
+#dd <- dd[!duplicated(dd),] #remove 140duplicates
+#THIS TABLE HAS REPLICATED (CIDS+LABELS) WITH DIFFERENT VARIABLE NAMES,
+dd$`Variable Label` <- ifelse(is.na(dd$`Variable Label`), dd$`Variable Name`, dd$`Variable Label`)
+#dd <- as.data.frame.matrix(do.call("rbind",dictionary)) #3523, some CID and labels are linked to different variable names 
+
+#dd1 <- dd[!duplicated(dd[,c("CID","Variable Label")]),]
+length(unique(dd$CID))
+#dd1 <- dd[!duplicated(dd[,c("CID","Variable Label")]),]
+length(unique(dd$CID))
+
+#the master dd with more info. on the formats (levels)
+urlfile<- "https://raw.githubusercontent.com/episphere/conceptGithubActions/master/csv/masterFile.csv" ###to grab the updated dd from github
+y <- read.csv(urlfile)
+pii_cid <- y$conceptId.3[which(y$PII == "Yes")]
+#dd$labels.combo <- paste(dd$`Variable Label`,dd$`Variable Name`,sep="$")
+ bq_auth()
+#The bigrquery package is requesting access to your Google account.
+#Select a pre-authorised account or enter '0' to obtain a new token.
+#Press Esc/Ctrl + C to cancel.
+
+  2 
+  
+  project <- "nih-nci-dceg-connect-prod-6d04"
+  billing <- "nih-nci-dceg-connect-prod-6d04"
+  
+  
+dup.long <- function(tb){
+  schm_query <- eval(parse(text=paste("bq_project_query(project, query=\"SELECT * FROM `nih-nci-dceg-connect-prod-6d04.FlatConnect`.
+                                 INFORMATION_SCHEMA.COLUMN_FIELD_PATHS WHERE table_name='",tb,
+                                   "'\")",sep="")))
+
+schema <- bigrquery::bq_table_download(schm_query,bigint = "character")
+  schema <- schema %>% 
+    mutate(long.Ending=ifelse(str_count(sapply(strsplit(column_name,"D_"),tail,1),"_") > 3 , 1,0),
+           newname.long = ifelse(str_count(column_name,"D_") >1 & str_count(sapply(strsplit(column_name,"D_"),tail,1),"_") > 0, paste0(substring(column_name,1,11),"_D_",substring(str_split_i(column_name,"D_",-1),1,11)), column_name),
+           var.pattern = case_when(str_count(column_name,"D_|d_") < 3 & str_count(column_name,"_") < 7 ~ column_name,                                                str_count(column_name,"D_|d_") <3 & str_count(column_name,"_") > 6 ~ substring(column_name,1,29),
+                                   str_count(column_name,"D_|d_") >2 & str_split_i(column_name,"D_",2) == str_split_i(column_name,"D_",3) ~ paste0(str_split_i(column_name,"_D_",1),"_D_",str_split_i(column_name,"_D_",3)),
+                                   str_count(column_name,"D_|d_") >2 & 2*str_count(column_name,"D_|d_")  > str_count(column_name,"_") & str_split_i(column_name,"_D_",1) != str_split_i(column_name,"_D_",2)  ~ column_name,
+                                   str_count(column_name,"D_|d_") >2 & 2*str_count(column_name,"D_|d_")  < str_count(column_name,"_") & str_split_i(column_name,"_D_",1) != str_split_i(column_name,"_D_",2)  ~ column_name),
+           varname_type = case_when(str_count(column_name,"D_|d_") < str_count(column_name,"_") & long.Ending==1 ~ paste("Long",str_count(column_name,"D_|d_"),sep="_"),
+                                  str_count(column_name,"D_|d_") < str_count(column_name,"_") & long.Ending==0 ~ paste("Short",str_count(column_name,"D_|d_"),str_count(sapply(strsplit(column_name,"D_"),tail,1),"_"),sep="_"),
+                                  str_count(column_name,"D_|d_") == str_count(column_name,"_") & long.Ending==0 ~ paste("Notails",str_count(column_name,"D_|d_"),sep="_")),
+          conceptId.2 = str_split_i(column_name,"_",2),
+          conceptId.3 = ifelse(str_count(column_name,"_D_") >0, substring(str_split_i(column_name,"_D_",-1),1,9),NA),
+          pii_cid3 = ifelse(substring(str_split_i(column_name,"_D_",-1),1,9) %in% pii_cid, 1,0)) 
+  #%>% filter(.,duplicated(schema$var.pattern)) %>% select(table_name, column_name,var.pattern,newname.long,varname_type)
+ 
+   dups <- schema$var.pattern[duplicated(schema$var.pattern)]
+   dups.long <- schema$var.pattern[duplicated(schema$var.pattern) & grepl("Long",schema$varname_type) & schema$pii_cid3 !=1]
+   
+   #dup.vars.long <- schema %>% filter(.,var.pattern %in% dups) %>% select(column_name, varname_type, var.pattern) %>% pivot_wider(names_from = varname_type, values_from = column_name, values_fill = 0)       
+   #dup_long <- dup.var.long[!is.na(long_2),]   
+ if(length(dups.long)>0){
+ sql.long <- NULL    
+    for (i in 1:length(dups.long)){
+     sql.newnames <- paste0(substring(dups.long[i],1,11),"_D_",str_split_i(dups.long[i],"D_",-1)) 
+     sql <- glue("COALESCE(",paste(schema$column_name[grepl(dups.long[i],schema$column_name)],collapse=","),") AS ", sql.newnames)
+     sql.long <- c(sql.long,sql)
+    }
+   
+ write.table(paste0("SELECT Connect_ID,\n ",paste(sql.txt,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"),paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_Long_similar_query_coalesce_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) #M1V2_Variable
+ }
+   
+ ##to write the sql for "coalesce" the duplicate variables with short tails
+ dups.short <- schema$var.pattern[duplicated(schema$var.pattern) & !grepl("Long|_0",schema$varname_type) & schema$pii_cid3!=1]
+ if(length(dups.short >0)){
+ sql.short <- NULL
+     for (i in 1:length(dups.short)){
+     sql.newnames <- paste0(substring(dups.short[i],1,11),"_D_",str_split_i(dups.short[i],"D_",-1)) 
+     sql <- glue("COALESCE(",paste(schema$column_name[grepl(dups.short[i],schema$column_name)],collapse=","),") AS ", sql.newnames)
+     sql.short <- c(sql.short,sql)
+    }
+   
+ write.table(paste0("SELECT Connect_ID,\n ",paste(sql.short,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"),paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_Short_similar_query_coalesce_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) 
+ }
+ 
+  longtails.only <- schema$column_name[which(!duplicated(schema$var.pattern) & schema$long.Ending == 1 & schema$pii_cid3 !=1)]
+  
+ if(length(longtails.only >0)){ 
+  sql.longrename <- filter(schema, column_name %in% longtails.only) %>% select(column_name,newname.long) %>%
+    mutate(sql.txt= glue('{column_name} AS {newname.long}'))
+  
+  write.table(glue("SELECT Connect_ID,\n ",paste(sql.longrename$sql.txt,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"), paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_LongTails_only_query_Renaming_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) 
+ }
+
+  return(schema)
+}
+  dups <- schema$var.pattern[duplicated(schema$var.pattern)]
+  schema_dup <- schema %>% filter(.,grepl(paste(dups,collapse="|"),column_name) | long.Ending==1)
+  
+  dups <- schema_m1v2$var.pattern[duplicated(schema_m1v2$var.pattern) & schema_m1v2$pii_cid3==1]
+```
+
+the function is to return the schema to double check to executable code on PII variables in module 1 version 2
+
+```{r}
+
+  dups <- schema$var.pattern[duplicated(schema$var.pattern)]
+  schema_dup <- schema %>% filter(.,grepl(paste(dups,collapse="|"),column_name) | long.Ending==1)
+  
+  dups <- schema_m1v2$var.pattern[duplicated(schema_m1v2$var.pattern) & schema_m1v2$pii_cid3==1]
+# [1] "D_537137982_1_1_D_338020179_1" "D_537137982_2_2_D_338020179_2" "D_537137982_3_3_D_338020179_3" "D_537137982_4_4_D_338020179_4"
+# [5] "D_537137982_5_5_D_338020179_5" "D_537137982_6_6_D_338020179_6" "D_537137982_7_7_D_338020179_7" "D_537137982_8_8_D_338020179_8"
+# [9] "D_537137982_9_9_D_338020179_9"
+dd[grepl("338020179",dd$CID),]
+# A tibble: 1 × 3
+  # CID       `Variable Label`               `Variable Name`            
+  # <chr>     <chr>                          <chr>                      
+# 1 338020179 Sibling 1 age at death, number SrvBOH_Sib1AgeDeathNum_v1r0  
+```
