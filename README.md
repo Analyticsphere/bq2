@@ -39,89 +39,28 @@ These generic transformations will be applied to each table:
 - QC check and correct values
 
   
-## Module 1
-
-#### (A) Planned
-
-#### (B) In-Progress
+### Module 1
 * Partition YEAR and AGE into seperate columns [CID: d_317093647]  https://github.com/Analyticsphere/bq2/issues/8
-  - Problem: 
-  - Solution:
-  - Files:
-* Correct/consolidate CIDs for <SURGERY_AGE> AND <SURGERY_YEAR>    https://github.com/Analyticsphere/bq2/issues/4
-* Convert 0/1 to yes/no (CIDs: 104430631/353358909) for Select-all-that-apply-variables     https://github.com/Analyticsphere/bq2/issues/5
+* Correct/consolidate CIDs for <SURGERY_AGE> and <SURGERY_YEAR>    https://github.com/Analyticsphere/bq2/issues/4
+* Convert 0/1 to yes/no (CIDs: 104430631/353358909) for _select-all-that-apply_ variables     https://github.com/Analyticsphere/bq2/issues/5
 * Remove unnecessary brackets from "false array" viarables - [CID1], [CID2], [], NULL --> CID1, CID2, NULL    https://github.com/Analyticsphere/bq2/issues/6
 * Consolidate loop variables w/ similar "CID2\_N\_CID3\_N" naming patterns     https://github.com/Analyticsphere/bq2/issues/7
 
-#### (C) Finalized
+### Module 2
 
+### Module 3
 
-## Module 2
+### Module 4
 
-#### (A) Planned
+### Clinical Biospecimen Survey
 
-#### (B) In-Progress
+### Participants
 
-#### (C) Finalized
+### Biospecimen
 
+### Biospecimen Survey
 
-## Module 3
+### Covid-19 Survey
 
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
-
-## Module 4
-
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
-
-## Clinical Biospecimen Survey
-
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
-
-## Participants Table
-
-
-## Biospecimen Table
-
-
-## Biospecimen Survey
-
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
-
-## Covid-19 Survey
-
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
-
-## Menstrual Survey
-
-#### (A) Planned
-
-#### (B) In-Progress
-
-#### (C) Finalized
-
+### Menstrual Survey
 
