@@ -16,6 +16,19 @@ All members of the BQ2 team can clone the "main" branch of this repo. Pull reque
 
 # Documentation of Transformations from BQ1 to BQ2
 
+For each query_generator (i.e., for each table), our process will be:
+1. Generate list of **all** variables from BQ schema
+2. Remove **all** PII
+3. Remove **all** Deprecated vars
+4. Remove **all** variables that are not in data dictionary
+5. Explicitly add exceptions to he above removals with appropriate handling (e.g., COALESCE)
+   - Assign each specific case to an issue and document separately
+   - Use seperate custom_r_functions for each use case
+     
+**NOTE:**
+- Each inclusion, exclusion or transformation criterion should be associated with a seperate function
+- Each function should generate a mini-report that lists all varaibles that were affected so that these decisions can be documented and reviewed by non-technical Connect folks.
+
 
 ![Schematic of transformations from BQ1 to BQ2](images/bq2-setup.png)[Lucid Chart](https://lucid.app/lucidchart/7d4864f5-3e19-4210-8da8-99a6c98ff6b7/edit?viewport_loc=-404%2C-59%2C3328%2C1587%2C0_0&invitationId=inv_45fd4ac7-8213-43b5-951d-240389f6b138)
 
