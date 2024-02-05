@@ -1,0 +1,294 @@
+---
+title: "BQ2_M1_merged"
+author: "Jing Wu"
+format: html
+editor: visual
+---
+
+## BQ2 merged Module1
+
+1.  to clean up the variables of both versions of M1,
+
+    a\. to variables with similar name patterns to the same question: to coalesce, rename
+
+    b\. to remove the PII-related variables
+
+    c\. to filter all the verified participants with consent forms
+
+2.  to merge two versions of M1:
+
+    a\. to remove the participants with duplicated responses of two versions of M1, to keep their V2 data (65 participants);
+
+    b\. to combine the common parts of M1 of both versions;
+
+    c\. to join the distinct part of each version
+
+3.  to create the sql code on merging two versions of M1
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+#| echo: false
+#| include: false
+#| eval: true
+# [hide] 
+library(data.table) ###to write or read and data management 
+library(tidyverse) ###for data management https://tidyselect.r-lib.org/reference/faq-external-vector.html
+library(dplyr) ###data management some functions are not available in the dplyr masked in the tidyverse
+library(reshape)  ###to work on transition from long to wide or wide to long data
+library(listr) ###to work on a list of vector, files or..
+#library(lubridate) ###date time it is already masked in 'tidyverse'
+library(gridExtra)
+library(stringr) ###to work on patterns, charaters
+library(plyr)
+library(tidyr)
+library(tinytex) #for pdf
+library(rmarkdown) ###for the output tables into other files: pdf, rtf, etc.
+library(janitor) #to get the summary sum
+library(finalfit) #https://cran.r-project.org/web/packages/finalfit/vignettes/export.html t
+library(expss) ###to add labels
+library(epiDisplay) ##recommended applied here crosstable, tab1
+#library(summarytools) ##recommended not applied in this R code
+library(arsenal)
+library(rio)
+library(readxl)
+library(purrr)
+
+#dictionary <- rio::import("https://github.com/episphere/conceptGithubActions/blob/master/aggregate.json",format = "json")
+dictionary <- rio::import("https://episphere.github.io/conceptGithubActions/aggregateCopy.json",format = "json")
+dd <- dplyr::bind_rows(dictionary,.id="CID")
+#dd <- dd[!duplicated(dd),] #remove 140duplicates
+#THIS TABLE HAS REPLICATED (CIDS+LABELS) WITH DIFFERENT VARIABLE NAMES,
+dd$`Variable Label` <- ifelse(is.na(dd$`Variable Label`), dd$`Variable Name`, dd$`Variable Label`)
+#dd <- as.data.frame.matrix(do.call("rbind",dictionary)) #3523, some CID and labels are linked to different variable names 
+
+#dd1 <- dd[!duplicated(dd[,c("CID","Variable Label")]),]
+length(unique(dd$CID))
+#dd1 <- dd[!duplicated(dd[,c("CID","Variable Label")]),]
+length(unique(dd$CID))
+
+#the master dd with more info. on the formats (levels)
+urlfile<- "https://raw.githubusercontent.com/episphere/conceptGithubActions/master/csv/masterFile.csv" ###to grab the updated dd from github
+y <- read.csv(urlfile)
+pii_cid <- y$conceptId.3[which(y$PII == "Yes")]
+#dd$labels.combo <- paste(dd$`Variable Label`,dd$`Variable Name`,sep="$")
+
+ bq_auth()
+#The bigrquery package is requesting access to your Google account.
+#Select a pre-authorised account or enter '0' to obtain a new token.
+#Press Esc/Ctrl + C to cancel.
+
+  2 
+  
+  project <- "nih-nci-dceg-connect-prod-6d04"
+  billing <- "nih-nci-dceg-connect-prod-6d04"
+  
+
+dup.long <- function(tb){
+  schm_query <- eval(parse(text=paste("bq_project_query(project, query=\"SELECT * FROM `nih-nci-dceg-connect-prod-6d04.FlatConnect`.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS WHERE table_name='",tb,"'\")", sep="")))
+
+schema <- bigrquery::bq_table_download(schm_query,bigint = "character")
+  schema <- schema %>% 
+    mutate(long.Ending=ifelse(str_count(sapply(strsplit(column_name,"D_"),tail,1),"_") > 3 , 1,0),
+           newname.long = ifelse(str_count(column_name,"D_") >1 & str_count(sapply(strsplit(column_name,"D_"),tail,1),"_") > 0, paste0(substring(column_name,1,11),"_D_",substring(str_split_i(column_name,"D_",-1),1,11)), column_name),
+           var.pattern = case_when(str_count(column_name,"D_|d_") < 3 & str_count(column_name,"_") < 7 ~ column_name,                                                str_count(column_name,"D_|d_") <3 & str_count(column_name,"_") > 6 ~ substring(column_name,1,29),
+                                   str_count(column_name,"D_|d_") >2 & str_split_i(column_name,"D_",2) == str_split_i(column_name,"D_",3) ~ paste0(str_split_i(column_name,"_D_",1),"_D_",str_split_i(column_name,"_D_",3)),
+                                   str_count(column_name,"D_|d_") >2 & 2*str_count(column_name,"D_|d_")  > str_count(column_name,"_") & str_split_i(column_name,"_D_",1) != str_split_i(column_name,"_D_",2)  ~ column_name,
+                                   str_count(column_name,"D_|d_") >2 & 2*str_count(column_name,"D_|d_")  < str_count(column_name,"_") & str_split_i(column_name,"_D_",1) != str_split_i(column_name,"_D_",2)  ~ column_name),
+           varname_type = case_when(str_count(column_name,"D_|d_") < str_count(column_name,"_") & long.Ending==1 ~ paste("Long",str_count(column_name,"D_|d_"),sep="_"),
+                                  str_count(column_name,"D_|d_") < str_count(column_name,"_") & long.Ending==0 ~ paste("Short",str_count(column_name,"D_|d_"),str_count(sapply(strsplit(column_name,"D_"),tail,1),"_"),sep="_"),
+                                  str_count(column_name,"D_|d_") == str_count(column_name,"_") & long.Ending==0 ~ paste("Notails",str_count(column_name,"D_|d_"),sep="_")),
+          conceptId.2 = str_split_i(column_name,"_",2),
+          conceptId.3 = ifelse(str_count(column_name,"_D_") >0, substring(str_split_i(column_name,"_D_",-1),1,9),NA),
+          pii_cid3 = ifelse(substring(str_split_i(column_name,"_D_",-1),1,9) %in% pii_cid, 1,0)) 
+  #%>% filter(.,duplicated(schema$var.pattern)) %>% select(table_name, column_name,var.pattern,newname.long,varname_type)
+ 
+   dups <- schema$var.pattern[duplicated(schema$var.pattern)]
+   dups.long <- schema$var.pattern[duplicated(schema$var.pattern) & grepl("Long",schema$varname_type) & schema$pii_cid3 !=1]
+   
+   #dup.vars.long <- schema %>% filter(.,var.pattern %in% dups) %>% select(column_name, varname_type, var.pattern) %>% pivot_wider(names_from = varname_type, values_from = column_name, values_fill = 0)       
+   #dup_long <- dup.var.long[!is.na(long_2),]   
+ if(length(dups.long)>0){
+ sql.long <- NULL    
+    for (i in 1:length(dups.long)){
+     sql.newnames <- paste0(substring(dups.long[i],1,11),"_D_",str_split_i(dups.long[i],"D_",-1)) 
+     sql <- glue("COALESCE(",paste(schema$column_name[grepl(dups.long[i],schema$column_name)],collapse=","),") AS ", sql.newnames)
+     sql.long <- c(sql.long,sql)
+    }
+   
+ write.table(paste0("SELECT Connect_ID,\n ",paste(sql.txt,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"),paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_Long_similar_query_coalesce_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) #M1V2_Variable
+ }
+   
+ ##to write the sql for "coalesce" the duplicate variables with short tails
+ dups.short <- schema$var.pattern[duplicated(schema$var.pattern) & !grepl("Long|_0",schema$varname_type) & schema$pii_cid3!=1]
+ if(length(dups.short >0)){
+ sql.short <- NULL
+     for (i in 1:length(dups.short)){
+     sql.newnames <- paste0(substring(dups.short[i],1,11),"_D_",str_split_i(dups.short[i],"D_",-1)) 
+     sql <- glue("COALESCE(",paste(schema$column_name[grepl(dups.short[i],schema$column_name)],collapse=","),") AS ", sql.newnames)
+     sql.short <- c(sql.short,sql)
+    }
+   
+ write.table(paste0("SELECT Connect_ID,\n ",paste(sql.short,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"),paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_Short_similar_query_coalesce_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) 
+ }
+ 
+  longtails.only <- schema$column_name[which(!duplicated(schema$var.pattern) & schema$long.Ending == 1 & schema$pii_cid3 !=1)]
+  
+ if(length(longtails.only >0)){ 
+  sql.longrename <- filter(schema, column_name %in% longtails.only) %>% select(column_name,newname.long) %>%
+    mutate(sql.txt= glue('{column_name} AS {newname.long}'))
+  
+  write.table(glue("SELECT Connect_ID,\n ",paste(sql.longrename$sql.txt,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.",tb,"`"), paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/",tb,"_no_pii_LongTails_only_query_Renaming_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F) 
+ }
+
+  return(schema)
+
+}
+ 
+#to create the function to identify the variable with the same name patterns
+#' Group Variables which have similar name patterns defined by their CID2, CID3 and numbers of the extensions of digits
+#'
+#' This function checks and extracts the variable names/column names of a dataset which are #' used in any other variable names to further check these variable sharing the same name 
+#' patterns 
+#'
+#' @param schema  stands for a schema of the dataset .
+#' @return A wide table "dupvar.dt2" which contains variables classified by "simple.name_x", "long.name_x" in the columns sharing" with same name patterns  shown in the column as "var.pattern" in a schema of a dataset
+#' @examples
+#' dupvar_v2 <- dup.names(schem_m1_v2)
+#' dupvar_v2[c(1:4,67,68),]
+#'  var.pattern                 n longer.name_1                       simple.name_1           longer.name_2
+#'   <chr>                   <int> <chr>                               <chr>                   <chr>        
+#' 1 D_115616118_D_403180970     1 D_115616118_D_115616118_D_403180970 D_115616118_D_403180970 NA 
+
+
+dup.names  <- function(schema){
+  
+  data <- schema
+  var.names <- data$column_name
+  dupvar.dt <- NULL
+  for(i in 1:length(var.names)){
+    name <- var.names[i]
+    dup_vars <- var.names[grepl(name,var.names)]
+    tmpDF <- data.frame(name=name,dup.vars=dup_vars)
+    dupvar.dt <- rbind(dupvar.dt,tmpDF)
+  }
+  names(dupvar.dt) <- c("var.pattern","dup.vars")
+  
+  dupvar.dt <- dupvar.dt %>% filter(.,var.pattern %in% var.pattern[duplicated(var.pattern)])
+  tmp <- dupvar.dt %>%
+    filter(.,var.pattern %in% var.pattern[duplicated(var.pattern)]) %>%
+    mutate(varname_type = ifelse(var.pattern == dup.vars,"simple.name","longer.name")) %>%
+    group_by(var.pattern,varname_type,dup.vars) %>% 
+    dplyr::summarise(n =n()) %>% 
+    group_by(var.pattern,varname_type) %>% 
+    mutate(cum.n=cumsum(n))
+
+  dupvar.dt2 <- tmp %>%
+    dplyr::group_by(var.pattern,varname_type,cum.n) %>%
+    pivot_wider(names_from = c(varname_type,cum.n), values_from = dup.vars, values_fill = NA)
+  
+  return(dupvar.dt2)
+}
+
+
+  con <- dbConnect(
+   bigrquery::bigquery(),
+   project = project,
+   dataset = "FlatConnect",
+   billing = billing
+ )
+   
+```
+
+QC: to clean up variables of both versions: removal of the PII-related variable, combine and renaming the duplicated variables
+
+```{r}
+#| echo: false
+
+schem_m1_v1 <- dup.long('module1_v1_JP')
+schem_m1_v2 <- dup.long('module1_v2_JP')
+
+var.matched <- schem_m1_v1$column_name[which(schem_m1_v1$column_name %in% schem_m1_v2$column_name)]
+
+#to work on each version data by common and unique parts
+
+ dups1 <- schem_m1_v1$var.pattern[duplicated(schem_m1_v1$var.pattern)]
+ 
+ schem_m1_v1 <- schem_m1_v1 %>% mutate(dups.var = ifelse(grepl(paste(dups1,collapse="|"),column_name), 1, 0),
+                                  common.vars = ifelse(column_name %in% var.matched, 1, 0))
+ table(schem_m1_v1[which(schem_m1_v1$pii_cid3!=1),]$common.vars,schem_m1_v1[which(schem_m1_v1$pii_cid3!=1),]$dups.var)
+   
+  #      0    1
+  # 0  158    0
+  # 1 1297   14
+ table(schem_m1_v1$common.vars,schem_m1_v1$dups.var)
+   
+  #      0    1
+  # 0  161    0
+  # 1 1316   14
+ table(schem_m1_v1$dups.var)
+
+#    0    1 
+# 1477   14  
+ table(schem_m1_v1$digits.Ends,schem_m1_v1$long.Ending)
+   
+  #      0    1
+  # 0 1025    0
+  # 1  292  174
+ #to get the common variables of version 1 without pii and removal of all duplicated variables (7 without tails)
+ common.v1 <- schem_m1_v1 %>% arrange(varname_type,column_name,var.pattern)%>% filter(common.vars == 1 & pii_cid3 != 1 & !duplicated(var.pattern)) %>% dplyr::select(column_name, var.pattern, newname.long, dups.var, long.Ending, varname_type)
+ v1_only <- schem_m1_v1 %>% arrange(varname_type,column_name,var.pattern)%>% filter(common.vars != 1 & pii_cid3 != 1 & !duplicated(var.pattern)) %>% dplyr::select(column_name,var.pattern,newname.long,dups.var, long.Ending, varname_type)
+ 
+#for module1 version2
+  dups2 <- schem_m1_v2$var.pattern[duplicated(schem_m1_v2$var.pattern)]
+ schem_m1_v2 <- schem_m1_v2 %>% mutate(dups.var = ifelse(grepl(paste(dups2,collapse="|"),column_name), 1, 0),
+                                  common.vars = ifelse(column_name %in% var.matched, 1, 0))
+ table(schem_m1_v2[which(schem_m1_v2$pii_cid3!=1),]$common.vars,schem_m1_v2[which(schem_m1_v2$pii_cid3!=1),]$dups.var)  
+  #       0    1
+  # 0  537  208
+  # 1 1181  130
+table(schem_m1_v2[which(schem_m1_v2$pii_cid3!=1),]$dups.var) 
+
+#   0    1 
+#1718  338 
+table(schem_m1_v2$pii_cid3) #39 pii-related variables, including 9 pairs (18 variables) as duplicated variables
+
+ common.v2 <- schem_m1_v2 %>% arrange(varname_type,column_name,var.pattern)%>% filter(common.vars == 1 & pii_cid3 != 1 | dups.var==1) %>% dplyr::select(table_name,column_name,var.pattern,dups.var,newname.long, long.Ending,varname_type) # 1537 common variables or common var.patterns
+ v2_only <- schem_m1_v2 %>% arrange(varname_type,column_name,var.pattern)%>% filter(common.vars == 0 & pii_cid3 != 1 & dups.var==0) %>% dplyr::select(table_name,column_name,var.pattern,dups.var,newname.long, long.Ending,varname_type)
+ #537 without pii or any parts of dups
+ 
+ 
+```
+
+to generate the sql code of the clean data for each version of M1 via sql
+
+```{r}
+#| echo: false
+#M1 version 1
+clean_m1v1 <- bind_rows(common.v1,v1_only) %>% as.tibble() %>% mutate(sql.txt=glue('{column_name} AS {newname.long}'))
+  write.table(glue("CREATE OR REPLACE TABLE module1_v1_clean AS \nSELECT ( ",paste(clean_m1v1$sql.txt,collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.module1_v1_JP`)"), paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/module1_v1_JP_no_pii_clean_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F)  
+
+#M1 version 2  
+variable.general <- bind_rows(common.v2,v2_only) %>% as.tibble() %>% filter(dups.var==0 ) %>% mutate(sql.txt =glue('{column_name} AS {newname.long}'))
+
+#variable.dups <- bind_rows(common.v2,v2_only) %>% as.tibble() %>% filter(dups.var==1) %>% mutate(sql.txt =glue('{column_name} AS {newname.long}'))
+
+ dups2_coalesce <- unique(common.v2$var.pattern[common.v2$dups.var==1 & !grepl("_0",common.v2$varname_type)] )
+ sql.dup1 <- NULL
+     for (i in 1:length(dups2_coalesce)){
+     sql.newnames <- unique(common.v2$newname.long[which(common.v2$var.pattern==dups2[i])])
+     sql <- glue("COALESCE(",paste(common.v2$column_name[grepl(dups2[i],common.v2$column_name)],collapse=","),") AS ", sql.newnames)
+     sql.dup <- c(sql.dup,sql)
+     }
+ sql.dup2 <- common.v2 %>% dplyr::filter(dups.var==1 & grepl("_0",common.v2$varname_type) & column_name == var.pattern) %>% mutate(sql.txt =glue('{column_name} AS {newname.long}'))
+ 
+  write.table(glue("CREATE OR REPLACE TABLE module1_v1_clean AS \nSELECT ( ",paste(c(variable.general$sql.txt,sql.dup1,sql.dup2$sql.txt),collapse=",\n"), " \nFROM  `nih-nci-dceg-connect-prod-6d04.FlatConnect.module1_v2_JP`)"), paste0("~/Documents/Connect_projects/Biospecimen_Feb2022/Jing_projects/biospecQC_03082022/data/module1_v2_JP_no_pii_clean_",Sys.Date(),".txt",sep=""), sep="\t",row.names = F,quote = F,col.names = F)  
+  
+  
+
+```
+
+```{r}
+```
