@@ -13,7 +13,7 @@ editor: visual
 ### Set script parameters
 
 ```{r}
-tier       <- "prod"
+tier       <- "dev"
 outputpath <- "sql"
 export_lists_of_variables <- FALSE
 
@@ -46,6 +46,8 @@ library(glue)
 bq_auth()
 
 ## User-defined Functions
+
+#this can be moved into the custom_r_functions
 
 # Get the last concept id from a given compound variable name
 # e.g., d_123456789_d_987654321_d_567891234 --> 567891234
@@ -89,7 +91,7 @@ recr_var <-
        WHERE table_name='participants_JP'")
     )
 recrvar          <- bigrquery::bq_table_download(recr_var, bigint = "integer64")
-recrvar_d        <- recrvar[grepl("d_|D_",recrvar$column_name),]
+#recrvar_d        <- recrvar[grepl("d_|D_",recrvar$column_name),]
 recrvar$last.CID <- lapply(recrvar$field_path, get_last_cid)
 
 # Get the Concept IDs from the participants table that contain PII
@@ -101,8 +103,8 @@ select      <- paste(parts_vars,collapse=",\n")
 query       <- glue("SELECT {select} 
                      FROM  `{project}.FlatConnect.participants_JP`  
                      WHERE d_512820379 = '197316935' )")
-# write.table(query,file=paste(outputpath,"Query_parts_verified_",
-#             currentDate, ".txt", sep=""))
+outpath = "/Users/sansalerj/Desktop/bq2/bq2/original_bq2_query_gen/"
+ write.table(query,file=paste(outpath,"Query_parts_verified_", ".txt", sep=""), quote = FALSE)
 ```
 
 ### Connect to BigQuery
@@ -193,6 +195,8 @@ q_nopii <- c("bioSurvey_v1_JP",
 # TODO: This type of indexing is dangerous. Explicitly select the items you want.
 for (ith_table in q_nopii) {
   select <- paste(schema[[ith_table]]$column_name, collapse = ", \n\tb.")  
+    select <- paste(schema[[ith_table]]$column_name)  
+
   table  <- unique(schema[[ith_table]]$table_name)
   sql    <- glue(
       "
@@ -218,7 +222,8 @@ for (ith_table in q_nopii) {
         AND p.d_747006172 != '353358909' -- has not withdrawn consent")
    
    bq2_tbl_name <- gsub("_v1_JP", "", table) # remove the _v1_JP pattern from file name
-   write(sql, file = glue("{outputpath}/{tier}/bq2_{bq2_tbl_name}.sql"))
+   outputpath = "/Users/sansalerj/Desktop/bq2/bq2/original_bq2_query_gen/"
+   write.table(select, file = paste0(outpath, bq2_tbl_name))
 
 }
 ```
@@ -241,6 +246,26 @@ for (i in c(1:length(schema))) {
 schem_m1_v1  <- schema[["module1_v1_JP"]] 
 schem_m1_v2  <- schema[["module1_v2_JP"]]
 
+#these variables had formatting issues and must be called into the query
+#separately and coalesced. see github BQ2 repo issue #4 for more info
+#these are only included in module 1 v2
+exceptions_m1_v2 <- c(
+  "D_150352141_D_623218391", "D_150352141_D_206625031",
+  "D_150352141_D_802622485", "D_150352141_D_261863326",
+  "D_122887481_D_623218391", "D_122887481_D_206625031",
+  "D_122887481_D_802622485", "D_122887481_D_261863326",
+  "D_534007917_D_623218391", "D_534007917_D_206625031",
+  "D_534007917_D_802622485", "D_534007917_D_261863326",
+  "D_752636038_D_623218391", "D_752636038_D_206625031",
+  "D_752636038_D_802622485", "D_752636038_D_261863326",
+  "D_518750011_D_623218391", "D_518750011_D_206625031",
+  "D_518750011_D_802622485", "D_518750011_D_261863326",
+  "D_275770221_D_623218391", "D_275770221_D_206625031",
+  "D_275770221_D_802622485", "D_275770221_D_261863326",
+  "D_527057404_D_623218391", "D_527057404_D_206625031",
+  "D_527057404_D_802622485", "D_527057404_D_261863326"
+)
+
 # Get the variables that are common to both versions
 m1_common.vars <- schem_m1_v1$column_name[which(schem_m1_v1$column_name 
                                                 %in% schem_m1_v2$column_name)]
@@ -257,18 +282,14 @@ v1_only_pii  <- dt_pii_dd$column_name[which(dt_pii_dd$column_name
 v2_only_pii  <- dt_pii_dd$column_name[which(dt_pii_dd$column_name 
                                             %in% V2_only_vars)]
 
-# Variables that are common to both versions
-var.matched  <- schem_m1_v1$column_name[which(schem_m1_v1$column_name 
-                                              %in% schem_m1_v2$column_name)]
-
 # PII variables that are common to both versions
 common_pii   <- unique(dt_pii_dd$column_name[which(dt_pii_dd$column_name 
-                                                   %in% var.matched)])
+                                                   %in% m1_common.vars)])
 
 # Save text files of these variable lists if desired
 if (export_lists_of_variables) {
   
-  write.table(paste(var.matched, collapse=",\n"),
+  write.table(paste(m1_common.vars, collapse=",\n"),
               glue("{outputpath}/{tier}/m1_common_variables.txt"), 
               sep = "\t", row.names = F, quote = F)
   
@@ -286,7 +307,7 @@ if (export_lists_of_variables) {
 
 # Build string of variables to select that are common to both versions,
 # unique to v1 and unique to v2
-selectm1_dup     <- paste(var.matched[which(var.matched %nin% common_pii)], 
+selectm1_dup     <- paste(m1_common.vars[which(m1_common.vars %nin% common_pii)], 
                           collapse = ",\n\t")
 select_m1v1_only <- paste(V1_only_vars[which(V1_only_vars %nin% v1_only_pii)], 
                           collapse = ", \n\tv1.")
@@ -318,6 +339,21 @@ description_str <-
       For participants to be included:
        - Verification Status [821247024] MUST BE verified
        - Consent Withdrawn [747006172] MUST NOT be YES [353358909]"
+# Transform the flat vector into pairs
+v2_exceptions_m1_v2 <- paste0("v2.", exceptions_m1_v2)
+variable_pairs <- matrix(v2_exceptions_m1_v2, ncol = 2, byrow = TRUE)
+
+# Apply create_coalesce_query to each pair
+coalesce_statements <- apply(variable_pairs, 1, function(pair) {
+  create_coalesce_query(pair, pair[1])
+})
+
+# Concatenate all coalesce statements
+coalesce_strings <- paste(coalesce_statements, collapse = ",\n\t")
+
+
+
+# Construct parameterized query for Module 1
 
 # Construct parameterized query for Module 1
 query_a <- glue(
@@ -331,12 +367,12 @@ query_a <- glue(
       WITH m1_dup AS
       (SELECT 
         {selectm1_dup}, 
-        2 as version 
+        2 as version
       FROM `{project}.FlatConnect.module1_v2_JP`
       UNION ALL
       SELECT
         {selectm1_dup},
-        1 as version 
+        1 as version
       FROM `{project}.FlatConnect.module1_v1_JP`
       -- Remove participants that completed both v1 & v2 from the table for v1.
       WHERE Connect_ID NOT IN 
@@ -348,6 +384,7 @@ query_a <- glue(
         -- Select variables that are unique to version 1
         {select_m1v1_only},
         -- Select variables that are unique to version 2
+       {coalesce_strings},
         {select_m1v2_only}
       FROM m1_dup AS dup
       LEFT JOIN `{project}.FlatConnect.module1_v1_JP` AS v1
@@ -359,7 +396,6 @@ query_a <- glue(
       WHERE 
         p.d_821247024 = '197316935'      -- is verified
         AND p.d_747006172 != '353358909' -- has not widrawn consent")
-
 # Save the query to file
 write(query_a, file = glue("{outputpath}/{tier}/bq2_module1.sql"))
 ```

@@ -15,7 +15,7 @@
 #' get_last_CID(c("D_108733102_1_1", "D_637540387_2_2", "NoNumber"))
 #' # [1] 108733102 637540387       NA
 #' @export
-get_last_CID <- function(compound_cid_names){
+get_last_cid <- function(compound_cid_names){
   require(dplyr)
 
   # Internal function to process a single name and return integer CID
