@@ -302,5 +302,4 @@ query_a <- glue(
         AND p.d_747006172 != '353358909' -- has not widrawn consent")
 # Save the query to file
 write(query_a, file = glue("{outputpath}/{tier}/module1.sql"))
-write(query_a, "/Users/sansalerj/Desktop/bq2_copy/module1.sql")
 }
