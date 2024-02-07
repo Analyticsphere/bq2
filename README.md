@@ -29,7 +29,77 @@ For each query_generator (i.e., for each table), our process will be:
 - Each inclusion, exclusion or transformation criterion should be associated with a seperate function
 - Each function should generate a mini-report that lists all varaibles that were affected so that these decisions can be documented and reviewed by non-technical Connect folks.
 
+## Diagrams
 
+#### The BQ2 workflow will eventually look something like this...
+```mermaid
+flowchart LR
+
+ subgraph BQ1["BQ1"]
+    C[("Connect")]
+    FC[("FlatConnect")]
+    CC[("CleanConnect")]
+    DC[("deIdConnnect")]
+  end
+  
+ subgraph BQ2["BQ2"]
+    DID[("Individual\nLevel\nData")]
+    SD[("Sensitive Data")]
+    DASHVIEW[("Aggregated\nData")]
+  end
+  
+ subgraph Users["IAM User Groups"]
+    USERA[["External A"]]
+    USERB[["External B"]]
+    USERC[["Internal A"]]
+    USERD[["Internal B"]]
+  end
+  
+ subgraph POSIT["Posit-Connect"]
+    DASH["Stakeholder \nMetrics \nDashboard"]
+  end
+
+    DID -- Aggregate --> DASHVIEW
+    DASH -. Access .-> USERA
+    DASHVIEW -. Access .-> USERB
+    C -- Flatten --> FC
+    FC -- Clean --> CC
+    CC -- De-identify --> DC
+    CC -- "Scheduled\nTransfer" --> SD
+    DC == "Scheduled\nTransfer" ==> DID
+    F("Firestore") == "Scheduled\nTransfer" ==> C
+    DID -. Restrictive Access .-> USERC
+    SD -. Very Restrictive Access .-> USERD
+    DASHVIEW -- API --> DASH
+
+    style F fill:#f5cc84,stroke:#333,stroke-width:2px 
+    style BQ1 fill:#D6EAF8,stroke:#333,stroke-width:2px
+    style BQ2 fill:#D1F2EB,stroke:#333,stroke-width:2px
+    style POSIT fill:#E8DAEF,stroke:#333,stroke-width:2px
+    style Users fill:#f4e4e9,stroke:#333,stroke-width:2px
+```
+### But for now, we will focus on populating cleanConnect and deIdConnect in BQ1.
+
+```mermaid
+flowchart LR
+
+ subgraph BQ1["BQ1"]
+    C[("Connect")]
+    FC[("FlatConnect")]
+    CC[("CleanConnect")]
+    DC[("deIdConnnect")]
+  end
+
+    C -- Flatten --> FC
+    FC -- Clean,\nMerge versions,\nFilter --> CC
+    CC -- De-identify,\nDerive agregate\nvariables --> DC
+    F("Firestore") == "Scheduled\nTransfer" ==> C
+
+    style F fill:#f5cc84,stroke:#333,stroke-width:2px 
+    style BQ1 fill:#D6EAF8,stroke:#333,stroke-width:2px
+```
+
+### This Lucid Chart diagram is an evolving schematic of the table-level details
 ![Schematic of transformations from BQ1 to BQ2](images/bq2-setup.png)[Lucid Chart](https://lucid.app/lucidchart/7d4864f5-3e19-4210-8da8-99a6c98ff6b7/edit?viewport_loc=-404%2C-59%2C3328%2C1587%2C0_0&invitationId=inv_45fd4ac7-8213-43b5-951d-240389f6b138)
 
 Below we will document transformations that are (A) planned, (B! in-progress, and (C) finalized, for each dataset. This will serve to organize the bq2 team and help us communicate with leadership about problems we identify and solutions that we implement.
