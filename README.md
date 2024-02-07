@@ -126,18 +126,41 @@ These generic transformations will be applied to each table:
 
 ### Module 2
 
-### Module 3
+- update me
+___
 
-### Module 4
+# Operational Assumptions 
+Here we will discuss which reference materials we can use to guide various filters or naming conventions in our ETL for generating the BQ2 queries. 
 
-### Clinical Biospecimen Survey
+## Column-level filters 
 
-### Participants
+### PII
+We are operating under the assumptions that 
 
-### Biospecimen
+1. the `PII` column in the data dictionary flags variables with `"Yes"` if they are to be **excluded from BQ2**
+2. the `PII` column in the data dictionary flags variables with `"No"` if they are to be **included in BQ2**
 
-### Biospecimen Survey
+### Deprecated Variables
+We are operating under the assumptions that
+1. When a variable is listed as `"Deprecated"` in the `Deprecated, New, or Revised` column of the Data Dictionary, it should be **excluded from BQ2**.
+2. When a variable is listed as `"New"` or `"Revised"` in the `Deprecated, New, or Revised` column of the Data Dictionary, it should be **included in BQ2** unless other filters apply.
 
-### Covid-19 Survey
+## Row-level Filters
 
-### Menstrual Survey
+We are operating under the assumptions that
+1. Unverified participants should not be included in BQ2
+2. Participants that have withdrawn consent should not be included in BQ2
+3. When participants have started and/or completed multiple versions of a module, only the responses two the latest version they completed should be included in BQ2.
+
+## Naming Convention Assumptions
+
+### Loop Variables
+
+Loop variables are given `_N` tags by Quest where `N` represents iteration of the question corresponding the Nth child or Nth occurrence that a question is referring to.
+
+We have been told to rename these variables with the form `D_CID2_D_CID3_N`.
+
+### Reporting on these Filters and Naming Conventions
+
+Each column-level filter, row-level filter, transformation or name change in our queries should have an associated report that is generated that explains the filters/transformations applied and which variables or participants were affected. 
+
