@@ -15,7 +15,34 @@
 get_dd <- function(remove_pii = FALSE){
     # Get updated data dictionary
     urlfile <-  "https://raw.githubusercontent.com/episphere/conceptGithubActions/master/csv/masterFile.csv" 
-    dd <- read.csv(urlfile) # TODO: Choose a better name for the Data Dictionary
+    rename_array <- c("primary_source_cid" = "concept_id",
+                      "secondary_source_cid" = "concept_id_1",
+                      "source_question_cid" = "concept_id_2",
+                      "question_cid" = "concept_id_3",
+                      "variable_cid" = "concept_id_4",
+                      "source_question" = "current_source_question",
+                      "question_text" = "current_question_text",
+                      "format_value" = "current_format_value")
+    dd <- read.csv(urlfile) %>%
+      janitor::clean_names() %>%
+      dplyr::rename(any_of(rename_array)) %>%
+      dplyr::select(primary_source_cid,
+                    primary_source,
+                    secondary_source_cid,
+                    secondary_source,
+                    source_question_cid,
+                    source_question,
+                    deprecated_new_or_revised,
+                    question_cid,
+                    question_text,
+                    variable_cid,
+                    variable_name,
+                    variable_label,
+                    variable_type,
+                    variable_length,
+                    format_value,
+                    pii)
+    
     # Placeholder for PII removal code
     # if (remove_pii) {
     #   # Code to remove PII goes here

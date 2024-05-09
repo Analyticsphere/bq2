@@ -1,12 +1,16 @@
 #' Generate module 1 Query
 #'
-#' This function generates a SQL query for module 1 based on the specified tier for BQ2 population(production, staging, or development).
-#' It connects to Google's BigQuery, retrieves schema information, and builds a SQL query to fetch non-PII (Personally Identifiable Information) data.
+#' This function generates a SQL query for module 1 based on the specified tier 
+#' for BQ2 population(production, staging, or development).
+#' It connects to Google's BigQuery, retrieves schema information, and builds a 
+#' SQL query to fetch non-PII (Personally Identifiable Information) data.
 #' 
-#' @param tier Character string specifying the environment: 'prod' for production, 'stg' for staging, and 'dev' for development.
+#' @param tier Character string specifying the environment: 'prod' for 
+#' production, 'stg' for staging, and 'dev' for development.
 #' If none of these are matched, 'unknown-environment' is returned.
 #'
-#' @return A SQL query string for fetching module 1 data is written to an output file named 'module1.sql' in the corresponding tier directory.
+#' @return A SQL query string for fetching module 1 data is written to an output 
+#' file named 'module1.sql' in the corresponding tier directory.
 #'
 #' @details 
 #' The function performs the following steps:
@@ -21,22 +25,23 @@
 #'
 #' @author Jing Wu, Jake Peters, Rebecca Sansale
 #'
-generate_module1_query <- function(tier){
+generate_module1_query <- function(tier, 
+                                   outputpath = 'sql',
+                                   export_lists_of_variables = 'FALSE'){
   
 project <- switch(tier,
-                    prod = "nih-nci-dceg-connect-prod-6d04",
-                    stg  = "nih-nci-dceg-connect-stg-5519",
-                    dev  = "nih-nci-dceg-connect-dev",
-                    "unknown-environment"  # Default value if none of the cases match
-)
+                  prod = "nih-nci-dceg-connect-prod-6d04",
+                  stg  = "nih-nci-dceg-connect-stg-5519",
+                  dev  = "nih-nci-dceg-connect-dev",
+                  "unknown-environment")  # Default value if no cases match
   
 library(bigrquery)
 library(data.table)
 library(tidyverse)
+library(plyr)
 library(dplyr)
 library(reshape)  
 library(stringr)
-library(plyr)
 library(DBI)
 library(quarto)
 library(arsenal)
@@ -69,20 +74,6 @@ con <- dbConnect(
     dataset = "FlatConnect",
     billing = project
 )
-  
-
-# Get list of recruitment variables from the participants table
-recr_var <- 
-  bq_project_query(
-    project, 
-    query = glue(
-      "SELECT * 
-       FROM `{project}.FlatConnect`.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS 
-       WHERE table_name='participants_JP'")
-    )
-recrvar          <- bigrquery::bq_table_download(recr_var, bigint = "integer64")
-#recrvar_d        <- recrvar[grepl("d_|D_",recrvar$column_name),]
-recrvar$last.CID <- lapply(recrvar$field_path, get_last_cid)
 
 # Get the Concept IDs from the participants table that contain PII
 pii_cid     <- y$conceptId.3[which(y$PII == "Yes")]
@@ -246,6 +237,7 @@ description_str <-
       For participants to be included:
        - Verification Status [821247024] MUST BE verified
        - Consent Withdrawn [747006172] MUST NOT be YES [353358909]"
+
 # Transform the flat vector into pairs
 v2_exceptions_m1_v2 <- paste0("v2.", exceptions_m1_v2)
 variable_pairs <- matrix(v2_exceptions_m1_v2, ncol = 2, byrow = TRUE)
@@ -288,7 +280,7 @@ query_a <- glue(
         -- Select variables that are unique to version 1
         {select_m1v1_only},
         -- Select variables that are unique to version 2
-       {coalesce_strings},
+        {coalesce_strings},
         {select_m1v2_only}
       FROM m1_dup AS dup
       LEFT JOIN `{project}.FlatConnect.module1_v1_JP` AS v1

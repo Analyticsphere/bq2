@@ -1,46 +1,73 @@
-#' Categorize Variable Names by String Patterns
+#' Categorize Variable Names by Dynamic String Patterns
 #'
-#' This function categorizes variable names based on specific string patterns. 
-#' It identifies three types of patterns: 'standard', 'long_tail', and 'short_tail'. 
-#' If a variable does not match any of these patterns, it is categorized as 'none'.
+#' This function categorizes variable names based on custom string patterns 
+#' passed as parameters. It enhances flexibility by allowing any set of 
+#' patterns and corresponding labels to be used for categorization.
 #'
 #' @param variable_name A string representing the variable name to be categorized.
+#' @param patterns A named list of regular expression patterns where each name 
+#' corresponds to a category label (e.g., 'standard', 'long_tail') and each value 
+#' is the regex pattern to match for that category.
 #'
-#' @return A string representing the category of the pattern: 'standard', 'long_tail', 
-#' 'short_tail', or 'none'.
+#' @return A string representing the category of the pattern based on the 
+#' provided patterns. If a variable name does not match any of the provided 
+#' patterns, it returns 'none'.
 #'
 #' @examples
-#' categorize_variable_pattern("D_207494582") # returns 'standard'
-#' categorize_variable_pattern("D_207025341_D_207025341_D_990501908") # returns 'standard'
-#' categorize_variable_pattern("D_158354252_1_1_D_206625031_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1") # returns 'long_tail'
-#' categorize_variable_pattern("D_236590500_3_3_D_236590500_3_3") # returns 'short_tail'
-#' categorize_variable_pattern("Random_Variable_123") # returns 'none'
+#' patterns <- list(
+#'   standard = '^D_\\d{9}(?:_D_\\d{9}){0,2}$',
+#'   long_tail = '^D_\\d{9}_(\\d)_(\\d)_D_\\d{9}(?:_\\1){23}$',
+#'   short_tail = '^D_\\d{9}_(\\d+)_\\1_D_\\d{9}_(\\1)(?:_\\1)?$'
+#' )
+#' categorize_variable_pattern("D_207494582", patterns) # returns 'standard'
+#' categorize_variable_pattern("D_158354252_1_1_D_206625031_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1", patterns) # returns 'long_tail'
+#' categorize_variable_pattern("D_236590500_3_3_D_236590500_3_3", patterns) # returns 'short_tail'
+#' categorize_variable_pattern("Random_Variable_123", patterns) # returns 'none'
 #'
 #' @details
-#' The function uses regular expressions to identify the following patterns:
-#' - 'standard': Variable names with up to 3 CIDs separated by 'D_'. 
-#'   Example: 'D_207494582', 'D_207025341_D_207025341_D_990501908'.
-#' - 'long_tail': Variable names following a specific repetitive structure, 
-#'   with a pattern repeating 24 times.
-#'   Example: 'D_158354252_1_1_D_206625031_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1'.
-#' - 'short_tail': Variable names with a shorter repetitive structure.
-#'   Example: 'D_236590500_3_3_D_236590500_3_3', 'D_236590500_6_6_D_182786508_6'.
+#' The function iterates over the provided patterns list, checking each pattern
+#' against the variable name. The first matching pattern's label is returned as 
+#' the category. If no pattern matches, 'none' is returned. This function can 
+#' be easily extended or modified by changing the patterns list, making it 
+#' versatile for different use cases.
 #'
 #' @export
-categorize_variable_pattern <- function(variable_name) {
-  # Define regular expression patterns
-  standard_pattern   <- '^D_\\d{9}(?:_D_\\d{9}){0,2}$'
-  long_tail_pattern  <- '^D_\\d{9}_(\\d)_(\\d)_D_\\d{9}(?:_\\1){23}$'
-  short_tail_pattern <- '^D_\\d{9}_(\\d+)_\\1_D_\\d{9}_(\\1)(?:_\\1)?$'
-  # how could we find a string pattern that matched D_CID_D_TUBLIG_D_CID
+#' 
+categorize_variable_pattern <- function(
+    variable_name, 
+    patterns = 
+      list(standard   = '^D_\\d{9}(?:_D_\\d{9}){0,2}$',
+           long_tail  = '^D_\\d{9}_(\\d)_(\\d)_D_\\d{9}(?:_\\1){23}$',
+           short_tail = '^D_\\d{9}_(\\d+)_\\1_D_\\d{9}_(\\1)(?:_\\1)?$')
+    ) {
   
-  # Categorize the variable name
-  category <- dplyr::case_when(
-    stringr::str_detect(variable_name, standard_pattern)   ~ "standard",
-    stringr::str_detect(variable_name, long_tail_pattern)  ~ "long_tail",
-    stringr::str_detect(variable_name, short_tail_pattern) ~ "short_tail",
-    TRUE ~ "none"
-  )
-  
-  return(category)
+    # Validate input
+    if (!is.list(patterns) || length(patterns) == 0) {
+      stop("Patterns must be a non-empty named list")
+    }
+    
+    # Default category
+    category <- "none"
+    
+    # Check each pattern
+    for (label in names(patterns)) {
+      if (stringr::str_detect(variable_name, patterns[[label]])) {
+        category <- label
+        break
+      }
+    }
+    
+    return(category)
 }
+    
+# Example usage
+patterns <- list(
+  standard   = '^D_\\d{9}(?:_D_\\d{9}){0,2}$',
+  long_tail  = '^D_\\d{9}(?:_\\d)_D_\\d{9}(?:_\\d){22,}$',
+  short_tail = '^D_\\d{9}_(\\d+)_\\1_D_\\d{9}_(\\1)(?:_\\1)?$'
+)
+    
+categorize_variable_pattern("D_207494582", patterns) # returns 'standard'
+categorize_variable_pattern("D_158354252_1_1_D_206625031_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1", patterns) # returns 'long_tail'
+categorize_variable_pattern("D_236590500_3_3_D_236590500_3_3", patterns) # returns 'short_tail'
+categorize_variable_pattern("Random_Variable_123", patterns) # returns 'none'
